@@ -1,0 +1,115 @@
+::@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+::Simple Adjustment
+::No display
+@echo off
+::Encoding
+chcp 65001
+color f4
+setlocal enabledelayedexpansion
+
+::Display settings
+mode 120,30
+set "cmdwidth=115"
+::@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+echo.
+set "b=#Welcome to the software installer#" & call :a b c
+set "b=#GPLI v 9.4.4 and FUSION INVENTORY v 1.1#" & call :a b c
+set "b=#17_Novembre_2019#" & call :a b c
+set "b=#Script version 1.0#" & call :a b c
+sleep 10s
+
+echo.
+set "b=#Starting.........#" & call :a b c
+sleep 5s
+
+echo.
+set "b=#Update packages#" & call :a b c
+sleep 2s
+echo.
+sudo apt-get update -y && apt-get upgrade -y 
+clear
+
+echo. Last change : update packages...
+echo.
+set "b=#Installing APTITUDE package#" & call :a b c
+sleep 2s
+echo.
+sudo apt-get install -y aptitude
+clear
+
+echo. Last change : installing APTITUDE package...
+echo.
+set "b=#Installing APACHE 2" & call :a b c
+sleep 2s
+echo.
+sudo aptitude install -y apache2
+/etc/apache2/sites-available/glpi.conf
+echo. "ServerName glpi.local.fr" > /etc/apache2/sites-available/glpi.conf
+sudo a2ensite glpi.conf
+sudo service apache2 restart
+clear
+echo. Last change : apache2...
+sleep 1s
+
+sudo aptitude install -y php7.3 php7.3-mysql php7.3-gd php7.3-mbstring php7.3-simplexml php7.3-curl php7.3-ldap php7.3-imap php7.3-apcu php7.3-xmlrpc php7.3-zip
+sudo apt-get install -y php-soap php-gettext php-apcu php-xmlrpc php-cas php-mysqli php-gd php-xml
+/etc/init.d/apache2 restart
+clear
+echo. Last change : php...
+sleep 1s
+
+sudo aptitude install -y mariadb-server
+systemctl enable mariadb.service
+echo. "CREATE DATABASE glpi" | mysql -u root 
+echo. "CREATE USER 'glpibdd'@'localhost' IDENTIFIED BY 'glpibddpass';" | mysql -u root
+echo. "GRANT ALL PRIVILEGES ON glpi. * TO 'glpibdd'@'localhost';" | mysql -u root
+clear
+echo. Last change : mariadb server and sql entries...
+sleep 1s
+
+cd /tmp
+wget https://github.com/glpi-project/glpi/releases/download/9.4.4/glpi-9.4.4.tgz
+tar xzf glpi-9.4.4.tgz
+cp -R /tmp/glpi /usr/share
+chown -R root.www-data /usr/share/glpi
+chmod -R 775 /usr/share/glpi
+ln -s /usr/share/glpi /var/www/html/
+/etc/init.d/apache2 restart
+rm /usr/share/glpi/install/install.php
+clear
+echo Last change : glpi...
+sleep 1s
+
+cd /tmp
+wget https://github.com/fusioninventory/fusioninventory-for-glpi/archive/glpi9.4+1.1.tar.gz
+tar xvf glpi9.4+1.1tar.gz -C /var/www/html/glpi/plugins
+chown -R www-data /var/www/html/glpi/plugins
+cd /var/www/html/glpi/plugins
+mv fusioninventory-for-glpi-glpi9.4.4-1.1/ fusioninventory/
+clear
+echo Last change : fusioninventoryplugin...
+sleep 1s
+
+
+
+
+
+pause>nul
+::@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+::Module de centrage. Pour les set "b=" & call :a b c 
+:a
+  if not "!%1:~%len%!"=="" set /A len+=1 & goto :a
+(endlocal & set %2=%len%)
+goto b
+:d
+set "spaces=%spaces% "
+goto :eof
+:b
+set /a "indent=(cmdwidth - c)/2" 
+set "spaces= "
+for /l %%a in (1,1,%indent%) do call :d
+echo %spaces%%b%
+set "len=0"
+goto :eof
+::@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
